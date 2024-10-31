@@ -41,3 +41,15 @@ clean:
 deps:
 	go mod tidy
 	go mod verify
+
+.PHONY: createMigration
+createMigration:
+	migrate create -ext=sql -dir=scripts/migrations -seq init
+
+.PHONY: migrate
+migrate:
+	migrate -path=scripts/migrations -database "postgres://postgres:postgres@localhost:5432/myapp?sslmode=disable" -verbose up
+
+.PHONY: migrateDown
+migrateDown:
+	migrate -path=scripts/migrations -database "postgres://postgres:postgres@localhost:5432/myapp?sslmode=disable" -verbose down
