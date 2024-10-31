@@ -1,0 +1,12 @@
+openapi: 3.0.0
+info:
+  title: Your API
+  version: 1.0.0
+paths:
+  /api/v1/users:
+    post:
+      summary: Create user
+      tags: [Users]
+      responses:
+        '201':
+          description: User created successfully
