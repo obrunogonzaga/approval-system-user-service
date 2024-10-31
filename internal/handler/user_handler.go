@@ -3,10 +3,11 @@ package handler
 import (
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/obrunogonzaga/project/internal/entity"
-	"github.com/obrunogonzaga/project/internal/usecase"
+	"github.com/obrunogonzaga/go-template/internal/entity"
+	"github.com/obrunogonzaga/go-template/internal/usecase"
 )
 
 type UserHandler struct {
@@ -22,60 +23,76 @@ func NewUserHandler(userUseCase usecase.UserUseCase) *UserHandler {
 func (h *UserHandler) RegisterRoutes(r *gin.RouterGroup) {
 	users := r.Group("/users")
 	{
-		users.POST("/", h.CreateUser)
-		users.GET("/:id", h.GetUser)
-		users.GET("/", h.ListUsers)
-		users.PUT("/:id", h.UpdateUser)
-		users.DELETE("/:id", h.DeleteUser)
+		users.POST("/", h.Create)
+		users.GET("/:id", h.GetByID)
+		users.GET("/", h.List)
+		users.PUT("/:id", h.Update)
+		users.DELETE("/:id", h.Delete)
 	}
 }
 
-func (h *UserHandler) CreateUser(c *gin.Context) {
+func (h *UserHandler) Create(c *gin.Context) {
 	var user entity.User
 	if err := c.ShouldBindJSON(&user); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	
-	if err := h.userUseCase.CreateUser(c.Request.Context(), &user); err != nil {
+
+	if err := h.userUseCase.Create(c.Request.Context(), &user); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	
+
 	c.JSON(http.StatusCreated, user)
 }
 
-func (h *UserHandler) GetUser(c *gin.Context) {
+func (h *UserHandler) GetByID(c *gin.Context) {
 	id := c.Param("id")
-	
-	user, err := h.userUseCase.GetUser(c.Request.Context(), id)
+
+	user, err := h.userUseCase.GetByID(c.Request.Context(), id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	
+
 	if user == nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
 		return
 	}
-	
+
 	c.JSON(http.StatusOK, user)
 }
 
-func (h *UserHandler) ListUsers(c *gin.Context) {
-	page := c.DefaultQuery("page", "1")
-	limit := c.DefaultQuery("limit", "10")
-	
-	users, err := h.userUseCase.ListUsers(c.Request.Context(), page, limit)
+func (h *UserHandler) List(c *gin.Context) {
+	pageStr := c.DefaultQuery("page", "1")
+	limitStr := c.DefaultQuery("limit", "10")
+
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid page value"})
+		return
+	}
+
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit < 1 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid limit value"})
+		return
+	}
+
+	if limit > 100 {
+		limit = 100
+	}
+
+	users, err := h.userUseCase.List(c.Request.Context(), page, limit)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	
+
 	c.JSON(http.StatusOK, users)
 }
 
-func (h *UserHandler) UpdateUser(c *gin.Context) {
+func (h *UserHandler) Update(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "id is required"})
@@ -88,7 +105,7 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	err := h.userUseCase.UpdateUser(c.Request.Context(), id, input)
+	err := h.userUseCase.Update(c.Request.Context(), id, input)
 	if err != nil {
 		if errors.Is(err, entity.ErrUserNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
@@ -101,14 +118,14 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-func (h *UserHandler) DeleteUser(c *gin.Context) {
+func (h *UserHandler) Delete(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "id is required"})
 		return
 	}
 
-	err := h.userUseCase.DeleteUser(c.Request.Context(), id)
+	err := h.userUseCase.Delete(c.Request.Context(), id)
 	if err != nil {
 		if errors.Is(err, entity.ErrUserNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})

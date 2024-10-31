@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/obrunogonzaga/your-project/entity"
+	"github.com/obrunogonzaga/go-template/internal/entity"
 )
 
 type userRepository struct {
@@ -31,7 +31,7 @@ func (r *userRepository) GetByID(ctx context.Context, id string) (*entity.User, 
 		FROM users 
 		WHERE id = $1
 	`
-	
+
 	user := &entity.User{}
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
 		&user.ID,
@@ -40,33 +40,33 @@ func (r *userRepository) GetByID(ctx context.Context, id string) (*entity.User, 
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)
-	
+
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
 		return nil, fmt.Errorf("error getting user: %w", err)
 	}
-	
+
 	return user, nil
 }
 
 func (r *userRepository) List(ctx context.Context, page, limit int) ([]entity.User, error) {
 	offset := (page - 1) * limit
-	
+
 	query := `
-		SELECT id, name, email, created_at, updated_at 
-		FROM users 
-		ORDER BY created_at DESC 
-		LIMIT $1 OFFSET $2
-	`
-	
+        SELECT id, name, email, created_at, updated_at 
+        FROM users 
+        ORDER BY created_at DESC 
+        LIMIT $1 OFFSET $2
+    `
+
 	rows, err := r.db.QueryContext(ctx, query, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("error listing users: %w", err)
 	}
 	defer rows.Close()
-	
+
 	var users []entity.User
 	for rows.Next() {
 		var user entity.User
@@ -82,11 +82,7 @@ func (r *userRepository) List(ctx context.Context, page, limit int) ([]entity.Us
 		}
 		users = append(users, user)
 	}
-	
-	if err = rows.Err(); err != nil {
-		return nil, fmt.Errorf("error iterating users: %w", err)
-	}
-	
+
 	return users, nil
 }
 
@@ -108,7 +104,7 @@ func (r *userRepository) Update(ctx context.Context, id string, input entity.Upd
 			updated_at = $3
 		WHERE id = $4
 	`
-	
+
 	result, err := r.db.ExecContext(
 		ctx,
 		query,
@@ -134,7 +130,7 @@ func (r *userRepository) Update(ctx context.Context, id string, input entity.Upd
 
 func (r *userRepository) Delete(ctx context.Context, id string) error {
 	query := `DELETE FROM users WHERE id = $1`
-	
+
 	result, err := r.db.ExecContext(ctx, query, id)
 	if err != nil {
 		return err

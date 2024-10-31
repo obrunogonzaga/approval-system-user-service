@@ -6,10 +6,10 @@ import (
 )
 
 type User struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	Email     string `json:"email"`
-	CreatedAt string `json:"created_at"`
+	ID        string    `json:"id"`
+	Name      string    `json:"name"`
+	Email     string    `json:"email"`
+	CreatedAt string    `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
@@ -24,4 +24,5 @@ type UserRepository interface {
 	Update(ctx context.Context, id string, input UpdateUserInput) error
 	Delete(ctx context.Context, id string) error
 	List(ctx context.Context, page, limit int) ([]User, error)
+	Count(ctx context.Context) (int, error)
 }

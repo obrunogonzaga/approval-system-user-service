@@ -3,25 +3,15 @@ package usecase
 import (
 	"context"
 	"fmt"
-	"strconv"
-
-	"github.com/obrunogonzaga/project/internal/entity"
+	"github.com/obrunogonzaga/go-template/internal/entity"
 )
 
-type PaginatedUsers struct {
-	Users      []entity.User `json:"users"`
-	TotalItems int          `json:"total_items"`
-	TotalPages int          `json:"total_pages"`
-	CurrentPage int         `json:"current_page"`
-	ItemsPerPage int        `json:"items_per_page"`
-}
-
 type UserUseCase interface {
-	CreateUser(ctx context.Context, user *entity.User) error
-	GetUser(ctx context.Context, id string) (*entity.User, error)
-	UpdateUser(ctx context.Context, id string, input entity.UpdateUserInput) error
-	DeleteUser(ctx context.Context, id string) error
-	ListUsers(ctx context.Context, page, limit string) ([]entity.User, error)
+	Create(ctx context.Context, user *entity.User) error
+	GetByID(ctx context.Context, id string) (*entity.User, error)
+	Update(ctx context.Context, id string, input entity.UpdateUserInput) error
+	Delete(ctx context.Context, id string) error
+	List(ctx context.Context, page, limit int) ([]entity.User, error)
 }
 
 type userUseCase struct {
@@ -34,80 +24,39 @@ func NewUserUseCase(userRepo entity.UserRepository) UserUseCase {
 	}
 }
 
-func (uc *userUseCase) CreateUser(ctx context.Context, user *entity.User) error {
+func (uc *userUseCase) Create(ctx context.Context, user *entity.User) error {
 	return uc.userRepo.Create(ctx, user)
 }
 
-func (uc *userUseCase) GetUser(ctx context.Context, id string) (*entity.User, error) {
+func (uc *userUseCase) GetByID(ctx context.Context, id string) (*entity.User, error) {
 	if id == "" {
 		return nil, entity.ErrInvalidInput
 	}
-	
+
 	user, err := uc.userRepo.GetByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("error getting user: %w", err)
 	}
-	
+
 	if user == nil {
 		return nil, entity.ErrUserNotFound
 	}
-	
+
 	return user, nil
 }
 
-func (uc *userUseCase) ListUsers(ctx context.Context, pageStr, limitStr string) (*PaginatedUsers, error) {
-	// Valores padrão para paginação
-	page := 1
-	limit := 10
-	
-	// Parse página
-	if pageStr != "" {
-		parsedPage, err := strconv.Atoi(pageStr)
-		if err != nil {
-			return nil, entity.ErrInvalidInput
-		}
-		if parsedPage < 1 {
-			return nil, entity.ErrInvalidInput
-		}
-		page = parsedPage
+func (uc *userUseCase) List(ctx context.Context, page, limit int) ([]entity.User, error) {
+	if page < 1 {
+		page = 1
 	}
-	
-	// Parse limite
-	if limitStr != "" {
-		parsedLimit, err := strconv.Atoi(limitStr)
-		if err != nil {
-			return nil, entity.ErrInvalidInput
-		}
-		if parsedLimit < 1 || parsedLimit > 100 {
-			return nil, entity.ErrInvalidInput
-		}
-		limit = parsedLimit
+	if limit < 1 || limit > 100 {
+		limit = 10
 	}
-	
-	// Busca usuarios e total
-	users, err := uc.userRepo.List(ctx, page, limit)
-	if err != nil {
-		return nil, fmt.Errorf("error listing users: %w", err)
-	}
-	
-	totalItems, err := uc.userRepo.Count(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("error counting users: %w", err)
-	}
-	
-	// Calcula total de páginas
-	totalPages := (totalItems + limit - 1) / limit
-	
-	return &PaginatedUsers{
-		Users:        users,
-		TotalItems:   totalItems,
-		TotalPages:   totalPages,
-		CurrentPage:  page,
-		ItemsPerPage: limit,
-	}, nil
+
+	return uc.userRepo.List(ctx, page, limit)
 }
 
-func (uc *userUseCase) UpdateUser(ctx context.Context, id string, input entity.UpdateUserInput) error {
+func (uc *userUseCase) Update(ctx context.Context, id string, input entity.UpdateUserInput) error {
 	// Verify if user exists
 	existing, err := uc.userRepo.GetByID(ctx, id)
 	if err != nil {
@@ -120,7 +69,7 @@ func (uc *userUseCase) UpdateUser(ctx context.Context, id string, input entity.U
 	return uc.userRepo.Update(ctx, id, input)
 }
 
-func (uc *userUseCase) DeleteUser(ctx context.Context, id string) error {
+func (uc *userUseCase) Delete(ctx context.Context, id string) error {
 	// Verify if user exists
 	existing, err := uc.userRepo.GetByID(ctx, id)
 	if err != nil {
