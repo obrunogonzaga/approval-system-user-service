@@ -36,7 +36,7 @@ A modern template for Go projects following clean architecture and design patter
 
 1. Clone this template:
 ```bash
-git clone https://github.com/your-username/go-template.git new-project
+git clone https://github.com/obrunogonzaga/go-template.git new-project
 cd new-project
 ```
 

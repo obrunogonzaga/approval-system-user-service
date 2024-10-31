@@ -1,12 +1,199 @@
 openapi: 3.0.0
 info:
-  title: Your API
+  title: User Management API
+  description: API for managing users with CRUD operations
   version: 1.0.0
+  contact:
+    name: Bruno Gonzaga Santos
+    email: brunog86@gmail.com
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local development server
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        name:
+          type: string
+          example: "John Doe"
+        email:
+          type: string
+          format: email
+          example: "john.doe@example.com"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - name
+        - email
+
+    UpdateUserInput:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 100
+          example: "John Doe"
+        email:
+          type: string
+          format: email
+          example: "john.doe@example.com"
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "user not found"
+
+  responses:
+    NotFound:
+      description: The specified resource was not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    BadRequest:
+      description: The request was invalid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
 paths:
-  /api/v1/users:
+  /users:
     post:
-      summary: Create user
+      summary: Create a new user
       tags: [Users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
       responses:
         '201':
           description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    get:
+      summary: List users with pagination
+      tags: [Users]
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          description: Number of items per page
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /users/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        description: User ID
+
+    get:
+      summary: Get user by ID
+      tags: [Users]
+      responses:
+        '200':
+          description: User found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      summary: Update user
+      tags: [Users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserInput'
+      responses:
+        '204':
+          description: User updated successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      summary: Delete user
+      tags: [Users]
+      responses:
+        '204':
+          description: User deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
