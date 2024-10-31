@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/obrunogonzaga/go-template/internal/entity"
 )
 
@@ -20,8 +21,28 @@ func NewUserRepository(db *sql.DB) entity.UserRepository {
 }
 
 func (r *userRepository) Create(ctx context.Context, user *entity.User) error {
-	query := `INSERT INTO users (id, name, email, created_at) VALUES ($1, $2, $3, $4)`
-	_, err := r.db.ExecContext(ctx, query, user.ID, user.Name, user.Email, user.CreatedAt)
+	user.ID = uuid.New().String()
+
+	now := time.Now()
+	if user.CreatedAt.IsZero() {
+		user.CreatedAt = now
+	}
+	if user.UpdatedAt.IsZero() {
+		user.UpdatedAt = now
+	}
+
+	query := `
+		INSERT INTO users (id, name, email, created_at, updated_at) 
+		VALUES ($1, $2, $3, $4, $5)
+	`
+	_, err := r.db.ExecContext(ctx, query,
+		user.ID,
+		user.Name,
+		user.Email,
+		user.CreatedAt,
+		user.UpdatedAt,
+	)
+
 	return err
 }
 

@@ -1,4 +1,62 @@
-### GET request to example server
-GET http://localhost:8080/api/v1/users
+### List Users with Pagination
+GET http://localhost:8080/api/v1/users?page=1&limit=10
+Accept: application/json
 
-###
+### Get Single User by ID
+GET http://localhost:8080/api/v1/users/e63e0255-f378-4b21-881e-16101414db96
+Accept: application/json
+
+### Create New User
+POST http://localhost:8080/api/v1/users
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "email": "john.doe@example.com"
+}
+
+### Update User
+PUT http://localhost:8080/api/v1/users/e63e0255-f378-4b21-881e-16101414db96
+Content-Type: application/json
+
+{
+  "name": "John Doe Updated",
+  "email": "john.updated@example.com"
+}
+
+### Delete User
+DELETE http://localhost:8080/api/v1/users/e63e0255-f378-4b21-881e-16101414db96
+
+### List Users with Custom Pagination
+GET http://localhost:8080/api/v1/users?page=2&limit=20
+Accept: application/json
+
+### Create User with Invalid Email (Test Validation)
+POST http://localhost:8080/api/v1/users
+Content-Type: application/json
+
+{
+  "name": "Invalid User",
+  "email": "invalid-email"
+}
+
+### Create User with Short Name (Test Validation)
+POST http://localhost:8080/api/v1/users
+Content-Type: application/json
+
+{
+  "name": "Jo",
+  "email": "valid@email.com"
+}
+
+### Get Non-Existent User (Test 404)
+GET http://localhost:8080/api/v1/users/non-existent-id
+Accept: application/json
+
+### Update User with Partial Data
+PUT http://localhost:8080/api/v1/users/c16e7050-7021-4671-a245-88a11fbbb6ad
+Content-Type: application/json
+
+{
+  "name": "Only Name Updated"
+}

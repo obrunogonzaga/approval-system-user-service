@@ -32,13 +32,19 @@ func (h *UserHandler) RegisterRoutes(r *gin.RouterGroup) {
 }
 
 func (h *UserHandler) Create(c *gin.Context) {
-	var user entity.User
-	if err := c.ShouldBindJSON(&user); err != nil {
+	var input struct {
+		Name  string `json:"name" binding:"required,min=3,max=100"`
+		Email string `json:"email" binding:"required,email"`
+	}
+
+	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	if err := h.userUseCase.Create(c.Request.Context(), &user); err != nil {
+	user := entity.NewUser(input.Name, input.Email)
+
+	if err := h.userUseCase.Create(c.Request.Context(), user); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
