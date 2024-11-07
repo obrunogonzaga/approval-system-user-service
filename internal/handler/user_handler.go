@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/obrunogonzaga/go-template/internal/dto"
 	"github.com/obrunogonzaga/go-template/internal/entity"
 	"github.com/obrunogonzaga/go-template/internal/usecase"
 )
@@ -32,17 +33,18 @@ func (h *UserHandler) RegisterRoutes(r *gin.RouterGroup) {
 }
 
 func (h *UserHandler) Create(c *gin.Context) {
-	var input struct {
-		Name  string `json:"name" binding:"required,min=3,max=100"`
-		Email string `json:"email" binding:"required,email"`
-	}
+	var input dto.CreateUserInput
 
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	user := entity.NewUser(input.Name, input.Email)
+	user, err := input.ToEntity()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
 	if err := h.userUseCase.Create(c.Request.Context(), user); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

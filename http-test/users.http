@@ -12,7 +12,9 @@ Content-Type: application/json
 
 {
   "name": "John Doe",
-  "email": "john.doe@example.com"
+  "email": "john.doe1@example.com",
+  "role": "admin",
+  "department": "TI"
 }
 
 ### Update User
